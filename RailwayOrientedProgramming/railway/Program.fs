@@ -65,14 +65,10 @@ let map singleTrackFunction =
 
 let registerPerson args =
     args
-    // parse
     >>= Parser.parseArgs
-    // validate
     >>= Validator.notBlank
     >>= Validator.email
-    // canonicalize email
     |> map canonicalizeEmail
-    // save
     >>= Repository.savePerson
 
 [<EntryPoint>]
