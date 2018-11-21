@@ -1,4 +1,5 @@
 module FromJson =
+    open System.IO
     open System.Runtime.Serialization.Json
     open System.Text
 
