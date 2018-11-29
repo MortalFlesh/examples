@@ -17,7 +17,7 @@ let getInitCounter() : Task<Counter> = task { return { Value = 42 } }
 let mutable currentValue = 0
 
 let current() =
-    sprintf "Current :%i" currentValue
+    sprintf "Current: %i" currentValue
 
 let start() =
     async {
@@ -41,12 +41,6 @@ let webApp = router {
     get "/start" (fun next ctx ->
         task {
             return! Successful.OK (start()) next ctx
-        })
-
-    get "/api/init" (fun next ctx ->
-        task {
-            let! counter = getInitCounter()
-            return! Successful.OK counter next ctx
         })
 }
 

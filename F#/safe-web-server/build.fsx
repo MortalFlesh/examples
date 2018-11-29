@@ -15,26 +15,6 @@ open Fake.IO
 let serverPath = Path.getFullName "./src/Server"
 let deployDir = Path.getFullName "./deploy"
 
-let platformTool tool winTool =
-    let tool = if Environment.isUnix then tool else winTool
-    match ProcessUtils.tryFindFileOnPath tool with
-    | Some t -> t
-    | _ ->
-        let errorMsg =
-            tool + " was not found in path. " +
-            "Please install it and make sure it's available from your path. " +
-            "See https://safe-stack.github.io/docs/quickstart/#install-pre-requisites for more info"
-        failwith errorMsg
-
-let runTool cmd args workingDir =
-    let arguments = args |> String.split ' ' |> Arguments.OfArgs
-    Command.RawCommand (cmd, arguments)
-    |> CreateProcess.fromCommand
-    |> CreateProcess.withWorkingDirectory workingDir
-    |> CreateProcess.ensureExitCode
-    |> Proc.run
-    |> ignore
-
 let runDotNet cmd workingDir =
     let result =
         DotNet.exec (DotNet.Options.withWorkingDirectory workingDir) cmd ""
