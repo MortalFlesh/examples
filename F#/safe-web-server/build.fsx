@@ -13,7 +13,6 @@ open Fake.DotNet
 open Fake.IO
 
 let serverPath = Path.getFullName "./src/Server"
-let clientPath = Path.getFullName "./src/Client"
 let deployDir = Path.getFullName "./deploy"
 
 let platformTool tool winTool =
@@ -26,9 +25,6 @@ let platformTool tool winTool =
             "Please install it and make sure it's available from your path. " +
             "See https://safe-stack.github.io/docs/quickstart/#install-pre-requisites for more info"
         failwith errorMsg
-
-let nodeTool = platformTool "node" "node.exe"
-let yarnTool = platformTool "yarn" "yarn.cmd"
 
 let runTool cmd args workingDir =
     let arguments = args |> String.split ' ' |> Arguments.OfArgs
@@ -56,54 +52,38 @@ Target.create "Clean" (fun _ ->
     Shell.cleanDirs [deployDir]
 )
 
-Target.create "InstallClient" (fun _ ->
-    printfn "Node version:"
-    runTool nodeTool "--version" __SOURCE_DIRECTORY__
-    printfn "Yarn version:"
-    runTool yarnTool "--version" __SOURCE_DIRECTORY__
-    runTool yarnTool "install --frozen-lockfile" __SOURCE_DIRECTORY__
-    runDotNet "restore" clientPath
-)
-
 Target.create "Build" (fun _ ->
     runDotNet "build" serverPath
-    runDotNet "fable webpack-cli -- --config src/Client/webpack.config.js -p" clientPath
 )
 Target.create "Run" (fun _ ->
     let server = async {
         runDotNet "watch run" serverPath
     }
-    let client = async {
-        runDotNet "fable webpack-dev-server -- --config src/Client/webpack.config.js" clientPath
-    }
     let browser = async {
         do! Async.Sleep 5000
-        openBrowser "http://localhost:8080"
+        openBrowser "http://localhost:8085"
     }
 
-    let vsCodeSession = Environment.hasEnvironVar "vsCodeSession"
-    let safeClientOnly = Environment.hasEnvironVar "safeClientOnly"
-
-    let tasks =
-        [ if not safeClientOnly then yield server
-          yield client
-          if not vsCodeSession then yield browser ]
+    let tasks = [
+        server
+        browser
+    ]
 
     tasks
     |> Async.Parallel
     |> Async.RunSynchronously
     |> ignore
 )
-
+Target.create "Hello" (fun _ ->
+    printfn "Hello world :)"
+)
 
 open Fake.Core.TargetOperators
 
 "Clean"
-    ==> "InstallClient"
     ==> "Build"
 
 "Clean"
-    ==> "InstallClient"
     ==> "Run"
 
 Target.runOrDefaultWithArguments "Build"
