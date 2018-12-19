@@ -1,0 +1,9 @@
+<root>
+    <person>
+        <name>Jirka</name>
+    </person>
+    <person>
+        <name>Petr</name>
+        <age>30</age>
+    </person>
+</root>
