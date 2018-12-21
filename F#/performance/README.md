@@ -9,22 +9,22 @@ Iterating mapping, filtering and reducing from 1k to 10m items
     1000        - 101   ms  | 
     10000       - 189   ms  | 
     100000      - 273   ms  | 
-    1000000     - 1978  ms  | 2  MB
-    10000000    - 21389 ms  | 20 MB
+    1000000     - 1978  ms  | 70   MB
+    10000000    - 21389 ms  | 3500 MB
 
 ## Seq
     1000        - 117   ms  | 
     10000       - 114   ms  | 
     100000      - 167   ms  | 
     1000000     - 728   ms  | 
-    10000000    - 7388  ms  | 0.1 MB
+    10000000    - 7388  ms  | 70   MB
 
 ## For
     1000        - 109   ms  |
     10000       - 108   ms  |
     100000      - 157   ms  |
     1000000     - 651   ms  |
-    10000000    - 5613  ms  | 0.1 MB
+    10000000    - 5613  ms  | 70   MB
 
 # Run interactively
 
