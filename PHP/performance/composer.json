@@ -1,0 +1,9 @@
+{
+    "name": "mf/performance-example",
+    "type": "project",
+    "require": {
+        "symfony/stopwatch": "^4.2",
+        "mf/collections-php": "^3.18",
+        "doctrine/collections": "^1.5"
+    }
+}
