@@ -1,7 +1,7 @@
 Performance
 ===========
 
-Iterating and mapping 1k and then 100m items
+Iterating mapping, filtering and reducing from 1k to 10m items
 
 # Run compiled
 
