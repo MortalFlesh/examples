@@ -47,10 +47,17 @@ Name must be checked for:
 fake build
 ```
 
-### Run
+### Run action 1
 ```bash
-fake build target run
+dotnet src/ValidateEmailApp/bin/Release/netcoreapp2.2/ValidateEmailApp.dll action1 some@email.cz
 ```
+
+### Run action 2 + 3
+```bash
+dotnet src/ValidateEmailApp/bin/Release/netcoreapp2.2/ValidateEmailApp.dll action2 some@email.cz e7d95cfc-0bce-44a1-8621-61047f84e766
+```
+
+**NOTE**: Use `Debug` dir instead of `Release` if you have `watch` running ...
 
 ### Watch
 ```bash
