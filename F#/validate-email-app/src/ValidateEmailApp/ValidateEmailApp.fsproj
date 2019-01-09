@@ -6,7 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="part1.fs" />
+    <ProjectReference Include="../AccountCreation/AccountCreation.fsproj">
+      <Name>AccountCreation.fsproj</Name>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="part2.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
