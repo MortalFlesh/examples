@@ -9,23 +9,15 @@ let main argv =
 
     match argv with
     | [| "action1"; input |] ->
-        Console.section "Action 1"
-
-        let code = Guid.NewGuid()
-        Console.successf2 "Email body: code for e-mail %s is %s" input (code.ToString())
+        input
+        |> BusinessLogic.action1
         0
     | [| "action2"; email; code |] ->
-        Console.section "Action 2"
-
-        match Console.ask "Do you want to create an account?" with
-        | "yes"
-        | "y" ->
-            Console.section "Action 3"
-            let name = Console.ask "Type in your name, please:"
-
-            Console.successf2 "Account is created for email %s with name %s" email name
+        if BusinessLogic.action2 email code then
+            email
+            |> BusinessLogic.action3
             0
-        | _ ->
+        else
             Console.success "Account is not created"
             0
     | _ ->
