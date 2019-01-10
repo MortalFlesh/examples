@@ -1,18 +1,26 @@
 namespace AccountCreation
 
 module Types =
+    type OuputMessage = string  // we want to return some message to the user
+
     // First, what do we know...
     //
     // For action 1
     // ------------
     // User will give as some input
     //    -> UserInput (string)
-    //
+    type UserInput = string
+
     // Input is validated, if it is an e-mail
     //    -> Email is
     //         unvalidated - just a user input
     //         or validated - if it passess all validation rules
-    //
+    type Email =
+        | Unvalidated of UserInput
+        | Validated of ValidEmail
+
+    and ValidEmail = ValidEmail of string   // anyone can create one just like that?
+
     // Validation gets a user input and validates it, which may ends up with different result of valid e-mail or some error
     //    -> UserInput -> Validation -> Result with a valid e-mail or an error
     //    we are validating e-mail for:
@@ -24,11 +32,38 @@ module Types =
     //          -> given email is not in correct format
     //          -> given email is not unique
     //          -> ... any other?
-    //
+
+    type EmailValidation =
+        IsUnique                                        // dependency
+            -> UserInput                                // input
+            -> Result<ValidEmail, EmailValidationError> // output
+
+    and IsUnique =
+        string -> bool  // smells?
+
+    and EmailValidationError =
+        | EmptyInput
+        | IncorrectFormat
+        | NotUnique
+
     // When we have a valid e-mail, we will send a confirmation e-mail with generated code
     //      -> Code - some generated string, but must be somehow associated with the e-mail (normally saved in some storage)
     //      -> Confirmation E-mail with code in it
     //          - ... could that end up with some error?
+
+    type Code = Code of string      // anyone can create one just like that?
+
+    type SendConfirmationEmail =
+        ConfirmationEmail -> unit
+
+    and ConfirmationEmail = ConfirmationEmailData of ValidEmail * Code
+
+    // so the action 1 is
+    type Action1 =
+        EmailValidation                                     // dependency
+            -> SendConfirmationEmail                        // dependency
+            -> UserInput                                    // input
+            -> Result<OuputMessage, EmailValidationError>   // output
 
     //
     // For action 2

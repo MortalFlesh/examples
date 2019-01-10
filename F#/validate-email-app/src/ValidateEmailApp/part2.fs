@@ -6,14 +6,21 @@ module BusinessLogic
 open System
 open MF.ConsoleStyle
 open AccountCreation.Types
+open AccountCreation
 
 let action1 input =
     Console.section "Action 1"
 
-    let code = Guid.NewGuid()
+    let validateEmail = fun _ _ ->
+        EmptyInput
+        |> Error
 
-    input + "|" + code.ToString()
-    |> Console.successf2 "Email body: code for e-mail %s is %s" input
+    let sendConfirmationEmail = fun _ -> ()
+    // todo - check https://github.com/swlaschin/DomainModelingMadeFunctional/blob/master/src/OrderTaking/PlaceOrder.Api.fs first
+
+    input
+    |> Action1.execute validateEmail sendConfirmationEmail
+    |> Result.map Console.success
 
 let action2 email code =
     Console.section "Action 2"
