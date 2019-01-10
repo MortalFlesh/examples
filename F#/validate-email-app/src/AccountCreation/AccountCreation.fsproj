@@ -5,8 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Types.fs" />
+    <Compile Include="Common.SimpleTypes.fs" />
+    <Compile Include="Common.CompoundTypes.fs" />
+    <Compile Include="AccountCreation.PublicTypes.fs" />
     <Compile Include="Action1.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Chessie" Version="0.6.0" />
   </ItemGroup>
 
 </Project>

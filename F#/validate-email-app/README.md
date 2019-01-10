@@ -18,18 +18,18 @@ Name must be checked for:
 - is longer than 2 chars
 
 ### Process
-#### Action 1
+#### Action 1 (Create Unconfirmed Account)
 - User types e-mail
     - It validates an e-mail
         - if it is valid, an automatic confirmation e-mail with unique code is sent (_for simplicity, it only outputs `Email body: code for e-mail {EMAIL} is {CODE}`_)
         - if it is not valid, the error is shown to the user
 
-#### Action 2
+#### Action 2 (Confirm Account)
 - If user clicks on the link in the confirmation e-mail (_for simplicity, use only types the code from the e-mail_)
     - E-mail is activated
     - User is promted for creating an account
 
-#### Action 3
+#### Action 3 (Activate Account)
 - User will create account for activated e-mail, by setting up a name
     - Account is created
 
