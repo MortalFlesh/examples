@@ -8,7 +8,7 @@
     <Compile Include="Common.SimpleTypes.fs" />
     <Compile Include="Common.CompoundTypes.fs" />
     <Compile Include="AccountCreation.PublicTypes.fs" />
-    <Compile Include="Action1.fs" />
+    <Compile Include="AccountCreation.ImplementationWithoutEffects.fs" />
   </ItemGroup>
 
   <ItemGroup>

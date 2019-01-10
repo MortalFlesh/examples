@@ -30,7 +30,7 @@ and UnvalidatedName = UnvalidatedName of string
 type ValidEmail = ValidEmail of EmailAddress
 type ConfirmationCode = ConfirmationCode of Code
 
-type UncofirmedAccount = {
+type UnconfirmedAccount = {
     Email: ValidEmail
     ConfirmationCode: ConfirmationCode
 }
@@ -57,6 +57,10 @@ type EmailValidationError =
     | WrongEmailAddress of EmailAddressError
     | NotUnique of ValidationError
 
+type UnconfirmedAccountCreationFailed =
+    | EmailValidationFailed of EmailValidationError
+    | ConfirmationEmailNotSent
+
 type ConfirmationError =
     | InvalidInactiveAccount
     | WrongEmailCodeCombination
@@ -69,7 +73,7 @@ type ActivationFailed =
 // Workflows (actions)
 
 type CreateUnconfirmedAccount =
-    UnvalidatedEmail -> Result<UncofirmedAccount, EmailValidationError>
+    UnvalidatedEmail -> Result<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
 
 type ConfirmAccount =
     UnvalidatedInactiveAccount -> Result<ConfirmedAccount, ConfirmationError>
