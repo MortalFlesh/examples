@@ -38,6 +38,8 @@ module Code =
         let email = email |> EmailAddress.value
         Code (sprintf "%s|%s" email uniqueHash)
 
+    let fromGenerated = Code    // we just use default constructor for it, but there could be other validations - format, etc.
+
 type Name = private Name of String20to50
 
 type NameError =

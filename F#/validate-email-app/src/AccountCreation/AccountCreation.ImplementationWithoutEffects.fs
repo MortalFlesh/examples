@@ -1,5 +1,6 @@
 module internal AccountCreation.ImplementationWithoutEffects
 
+open System
 open AccountCreation.Common
 open AccountCreation.Domain
 
@@ -20,13 +21,10 @@ type CreateUnconfirmedAccountWithoutEffects =
     UnvalidatedEmail -> UnconfirmedAccount
 
 type ConfirmAccountWithoutEffects =
-    UnvalidatedInactiveAccount -> ConfirmedAccount
-
-type AskUserToActiveAccountWithoutEffects =
-    ConfirmedAccount -> ActivateAccountResponse
+    UnvalidatedUncornfirmedAccount -> ActivateAccountResponse
 
 type ActivateAccountWithoutEffects =
-    ActivateAccountResponse -> ActiveAccount
+    ActivateAccountResponse -> ActiveAccount option
 
 // ======================================================
 // Override the SimpleType constructors
@@ -169,3 +167,102 @@ let action1
         match sendResult with
         | NotSent -> ConfirmationEmailNotSent |> failwithf "%A"
         | Sent -> validEmail
+
+// ======================================================
+// Action 2 / Section 1 : Define each step in the workflow using types
+// ======================================================
+
+// ---------------------------
+// Validation step
+
+type ValidateUnconfirmedAccount =
+    CreateUnconfirmedAccount -> UnvalidatedUncornfirmedAccount -> UnconfirmedAccount
+
+// ---------------------------
+// Confirmed account creation step
+
+type ConfirmUnconfirmedAccount =
+    CheckConfirmationCode -> UnconfirmedAccount -> ConfirmedAccount
+
+and CheckConfirmationCode =
+    ValidEmail -> ConfirmationCode -> bool
+
+// ---------------------------
+// Ask user to activate account step
+
+type AskUserToActivateAccountWithoutEffects =
+    AskUser -> ConfirmedAccount -> ActivateAccountResponse
+
+and AskUser =
+    Question -> string
+
+and Question = Question of string
+
+// ======================================================
+// Action 2 / Section 2 : Implementation steps
+// ======================================================
+
+// ---------------------------
+// Validation step
+
+let validateUnconfirmedAccount : ValidateUnconfirmedAccount =
+    fun createUnconfirmedAccount unconfirmedAccount ->
+        if String.IsNullOrEmpty(unconfirmedAccount.Email) || String.IsNullOrEmpty(unconfirmedAccount.Code) then
+            failwithf "%A" InvalidInactiveAccount
+
+        let validEmail = unconfirmedAccount.Email |> EmailAddress.create |> ValidEmail
+        let confirmationCode = unconfirmedAccount.Code |> Code.fromGenerated |> ConfirmationCode
+
+        createUnconfirmedAccount validEmail confirmationCode
+
+// ---------------------------
+// Confirmed account creation step
+
+let confirmUnconfirmedAccount : ConfirmUnconfirmedAccount =
+    fun checkConfirmationCode unconfirmedAccount ->
+        if checkConfirmationCode unconfirmedAccount.Email unconfirmedAccount.ConfirmationCode |> not then
+            failwithf "%A" WrongEmailCodeCombination
+
+        {
+            Email = unconfirmedAccount.Email |> ActiveEmail
+        }
+
+// ---------------------------
+// Ask user to activate account step
+
+let askUserToActivateAccountWithoutEffects : AskUserToActivateAccountWithoutEffects =
+    fun askUser confirmedAccount ->
+        let shouldCreateAccount =
+            confirmedAccount.Email
+            |> sprintf "Do you want to create an account for %A? [yes | no]"
+            |> Question
+            |> askUser
+        match shouldCreateAccount with
+        | "no" -> No
+        | "yes" ->
+            "Type in your name:"
+            |> Question
+            |> askUser
+            |> UnvalidatedName
+            |> Yes
+        // How to handle incomplete pattern here? Should we take all other than "no" as "yes"? Or we should fail?
+        | _ -> failwithf "Wrong answer given - only \"yes\" and \"no\" are allowed."
+
+// =========================
+// Action 2 workflow
+// =========================
+
+let action2
+    validateUnconfirmedAccount          // dependency
+    confirmUnconfirmedAccount           // dependency
+    askUserToActiveAccount              // dependency
+    : ConfirmAccountWithoutEffects =    // function definition
+
+    fun unvalidatedUncornfirmedAccount ->
+        let unconfirmedAccount =
+            unvalidatedUncornfirmedAccount
+            |> validateUnconfirmedAccount
+
+        unconfirmedAccount
+        |> confirmUnconfirmedAccount
+        |> askUserToActiveAccount
