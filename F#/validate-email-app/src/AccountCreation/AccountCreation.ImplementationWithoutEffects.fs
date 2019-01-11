@@ -240,11 +240,14 @@ let askUserToActivateAccountWithoutEffects : AskUserToActivateAccountWithoutEffe
         match shouldCreateAccount with
         | "no" -> No
         | "yes" ->
-            "Type in your name:"
-            |> Question
-            |> askUser
-            |> UnvalidatedName
-            |> Yes
+            let name =
+                "Type in your name:"
+                |> Question
+                |> askUser
+                |> UnvalidatedName
+
+            Yes (confirmedAccount.Email, name)
+
         // How to handle incomplete pattern here? Should we take all other than "no" as "yes"? Or we should fail?
         | _ -> failwithf "Wrong answer given - only \"yes\" and \"no\" are allowed."
 
@@ -266,3 +269,42 @@ let action2
         unconfirmedAccount
         |> confirmUnconfirmedAccount
         |> askUserToActiveAccount
+
+// ======================================================
+// Action 3 / Section 1 : Define each step in the workflow using types
+// ======================================================
+
+// ---------------------------
+// Creation of active account step
+
+type CreateActiveAccount =
+    ActiveEmail -> UserName -> ActiveAccount
+
+// ======================================================
+// Action 3 / Section 2 : Implementation steps
+// ======================================================
+
+let createActiveAccount : CreateActiveAccount =
+    fun activeEmail userName ->
+        {
+            Email = activeEmail
+            Name = userName
+        }
+
+// =========================
+// Action 3 workflow
+// =========================
+
+let action3
+    createActiveAccount
+    : ActivateAccountWithoutEffects =
+
+    fun activateAccountResponse ->
+        match activateAccountResponse with
+        | No -> None
+        | Yes (activeEmail, UnvalidatedName unvalidatedName) ->
+            unvalidatedName
+            |> Name.create
+            |> UserName
+            |> createActiveAccount activeEmail
+            |> Some

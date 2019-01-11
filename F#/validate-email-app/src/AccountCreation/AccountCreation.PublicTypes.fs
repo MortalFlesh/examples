@@ -18,11 +18,7 @@ type UnvalidatedUncornfirmedAccount = {
     Code: string
 }
 
-type ActivateAccountResponse =
-    | Yes of UnvalidatedName
-    | No
-
-and UnvalidatedName = UnvalidatedName of string
+type UnvalidatedName = UnvalidatedName of string
 
 // ----------------------------------
 // Output from the domain (success)
@@ -36,6 +32,10 @@ type UnconfirmedAccount = {
 }
 
 type ActiveEmail = ActiveEmail of ValidEmail
+
+type ActivateAccountResponse =
+    | Yes of ActiveEmail * UnvalidatedName
+    | No
 
 type ConfirmedAccount = {
     Email: ActiveEmail
