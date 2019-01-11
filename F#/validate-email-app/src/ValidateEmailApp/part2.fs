@@ -5,10 +5,15 @@ module BusinessLogic
 
 open System
 open MF.ConsoleStyle
+open AccountCreation
+open MF.ConsoleStyle
 
 let action1 input =
     Console.section "Action 1"
-    failwithf "Not implemented yet"
+
+    input
+    |> ConsoleApi.action1
+    |> Console.successf "Action 1 ends up with unconfirmed account %A"
 
 let action2 email code =
     Console.section "Action 2"

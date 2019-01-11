@@ -37,7 +37,7 @@ let failOnError result =
     | Error error -> failwithf "%A" error
 
 module String20to50 =
-    let create fieldName = String20to50.create fieldName >> failOnError
+    let create fieldName = String5to50.create fieldName >> failOnError
 
 module EmailAddress =
     let create = EmailAddress.create >> failOnError
@@ -76,7 +76,10 @@ type CreateUnconfirmedAccount =
 // Confirmation email step
 
 type SendConfirmationEmail =
-    UnconfirmedAccount -> SendResult
+    SendMail -> UnconfirmedAccount -> SendResult
+
+and SendMail =
+    EmailBody -> SendResult
 
 and SendResult =
     | Sent
@@ -127,7 +130,7 @@ let createUnconfirmedAccount : CreateUnconfirmedAccount =
 // Confirmation email step
 
 let sendConfirmationEmail : SendConfirmationEmail =
-    fun uncofirmedAccount ->
+    fun sendMail uncofirmedAccount ->
         let { Email = validEmail; ConfirmationCode = confirmationCode } = uncofirmedAccount
 
         let (ValidEmail emailAddress) = validEmail
@@ -136,8 +139,9 @@ let sendConfirmationEmail : SendConfirmationEmail =
         let (ConfirmationCode code) = confirmationCode
         let codeValue = code |> Code.value
 
-        printfn "Email body: code for e-mail %s is %s" emailValue codeValue     // sending mail sideeffect
-        Sent
+        sprintf "code for e-mail %s is %s" emailValue codeValue
+        |> EmailBody
+        |> sendMail
 
 // =========================
 // Action 1 workflow
@@ -158,15 +162,15 @@ let action1
             validEmail
             |> createConfirmationCode
         let unconfirmedAccount =
-            validEmail
-            |> createUnconfirmedAccount confirmationCode
+            confirmationCode
+            |> createUnconfirmedAccount validEmail
         let sendResult =
             unconfirmedAccount
             |> sendConfirmationEmail
 
         match sendResult with
         | NotSent -> ConfirmationEmailNotSent |> failwithf "%A"
-        | Sent -> validEmail
+        | Sent -> unconfirmedAccount
 
 // ======================================================
 // Action 2 / Section 1 : Define each step in the workflow using types
