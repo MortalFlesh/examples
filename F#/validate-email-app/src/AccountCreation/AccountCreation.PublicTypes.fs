@@ -13,7 +13,7 @@ open AccountCreation.Common
 
 type UnvalidatedEmail = UnvalidatedEmail of string
 
-type UnvalidatedUncornfirmedAccount = {
+type UnvalidatedUnconfirmedAccount = {
     Email: string
     Code: string
 }
@@ -76,7 +76,7 @@ type CreateUnconfirmedAccount =
     UnvalidatedEmail -> Result<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
 
 type ConfirmAccount =
-    UnvalidatedUncornfirmedAccount -> Result<ConfirmedAccount, ConfirmationError>
+    UnvalidatedUnconfirmedAccount -> Result<ConfirmedAccount, ConfirmationError>
 
 type AskUserToActiveAccount =
     ConfirmedAccount -> ActivateAccountResponse

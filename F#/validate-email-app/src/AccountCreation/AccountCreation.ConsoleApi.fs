@@ -4,7 +4,18 @@ open AccountCreation.Common
 open AccountCreation.Domain
 open AccountCreation
 
-// todo define type for console<action1>, ...
+// =============================
+// Types for actions executed in console application
+// =============================
+
+type ConsoleAction1 =
+    UnvalidatedEmail -> UnconfirmedAccount
+
+type ConsoleAction2 =
+    UnvalidatedUnconfirmedAccount -> ActivateAccountResponse
+
+type ConsoleAction3 =
+    ActivateAccountResponse -> ActiveAccount option
 
 // =============================
 // Implementation
@@ -44,36 +55,42 @@ let askUserQuestion consoleAsk : ImplementationWithoutEffects.AskUser =
 // workflow
 // -------------------------------
 
-let action1 unvalidatedEmail =
-    // inject dependencies
-    let action1Workflow =
-        ImplementationWithoutEffects.action1
-            (ImplementationWithoutEffects.validateEmail isUnique)
-            ImplementationWithoutEffects.createConfirmationCode
-            createUnconfirmedAccount
-            (ImplementationWithoutEffects.sendConfirmationEmail sendMail)
+let action1 : ConsoleAction1 =
+    fun unvalidatedEmail ->
+        // inject dependencies
+        let action1Workflow =
+            ImplementationWithoutEffects.action1
+                (ImplementationWithoutEffects.validateEmail isUnique)
+                ImplementationWithoutEffects.createConfirmationCode
+                createUnconfirmedAccount
+                (ImplementationWithoutEffects.sendConfirmationEmail sendMail)
 
-    unvalidatedEmail
-    |> action1Workflow
+        unvalidatedEmail
+        |> action1Workflow
 
-let action2 askUser unvalidatedUnconfirmedAccount =
-    let askUser = askUserQuestion askUser
+let action2
+    askUser
+    : ConsoleAction2 =
 
-    // inject dependencies
-    let action2workflow =
-        ImplementationWithoutEffects.action2
-            (ImplementationWithoutEffects.validateUnconfirmedAccount createUnconfirmedAccount)
-            (ImplementationWithoutEffects.confirmUnconfirmedAccount checkConfirmationCode)
-            (ImplementationWithoutEffects.askUserToActivateAccountWithoutEffects askUser)
+    fun unvalidatedUnconfirmedAccount ->
+        let askUser = askUserQuestion askUser
 
-    unvalidatedUnconfirmedAccount
-    |> action2workflow
+        // inject dependencies
+        let action2workflow =
+            ImplementationWithoutEffects.action2
+                (ImplementationWithoutEffects.validateUnconfirmedAccount createUnconfirmedAccount)
+                (ImplementationWithoutEffects.confirmUnconfirmedAccount checkConfirmationCode)
+                (ImplementationWithoutEffects.askUserToActivateAccountWithoutEffects askUser)
 
-let action3 response =
-    // inject dependencies
-    let action3workflow =
-        ImplementationWithoutEffects.action3
-            ImplementationWithoutEffects.createActiveAccount
+        unvalidatedUnconfirmedAccount
+        |> action2workflow
 
-    response
-    |> action3workflow
+let action3 : ConsoleAction3 =
+    fun response ->
+        // inject dependencies
+        let action3workflow =
+            ImplementationWithoutEffects.action3
+                ImplementationWithoutEffects.createActiveAccount
+
+        response
+        |> action3workflow

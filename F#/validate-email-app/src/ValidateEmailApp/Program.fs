@@ -12,9 +12,10 @@ let main argv =
         | [| "action1"; input |] ->
             input
             |> BusinessLogic.action1
+            |> BusinessLogic.printResult
         | [| "action2"; email; code |] ->
             BusinessLogic.action2 email code
-            |> BusinessLogic.action3
+            |> BusinessLogic.printResult
         | _ ->
             Console.error "Invalid or unknown action"
             0

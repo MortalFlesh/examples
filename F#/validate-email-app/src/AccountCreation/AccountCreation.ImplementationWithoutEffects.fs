@@ -21,7 +21,7 @@ type CreateUnconfirmedAccountWithoutEffects =
     UnvalidatedEmail -> UnconfirmedAccount
 
 type ConfirmAccountWithoutEffects =
-    UnvalidatedUncornfirmedAccount -> ActivateAccountResponse
+    UnvalidatedUnconfirmedAccount -> ActivateAccountResponse
 
 type ActivateAccountWithoutEffects =
     ActivateAccountResponse -> ActiveAccount option
@@ -180,7 +180,7 @@ let action1
 // Validation step
 
 type ValidateUnconfirmedAccount =
-    CreateUnconfirmedAccount -> UnvalidatedUncornfirmedAccount -> UnconfirmedAccount
+    CreateUnconfirmedAccount -> UnvalidatedUnconfirmedAccount -> UnconfirmedAccount
 
 // ---------------------------
 // Confirmed account creation step
