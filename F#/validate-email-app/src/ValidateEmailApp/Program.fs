@@ -14,13 +14,9 @@ let main argv =
             |> BusinessLogic.action1
             0
         | [| "action2"; email; code |] ->
-            if BusinessLogic.action2 email code then
-                email
-                |> BusinessLogic.action3
-                0
-            else
-                Console.success "Account is not created"
-                0
+            BusinessLogic.action2 email code
+            |> BusinessLogic.action3
+            0
         | _ ->
             Console.error "Invalid or unknown action"
             0
