@@ -10,7 +10,7 @@ open System
 
 type EmailBody = EmailBody of string
 
-type String5to50 = private String5to50 of string
+type String2to50 = private String2to50 of string
 type String10to50 = private String10to50 of string
 
 // ===============================
@@ -34,11 +34,11 @@ module private ConstrainedType =
             |> constructor
             |> Ok
 
-module String5to50 =
-    let value (String5to50 string) = string
+module String2to50 =
+    let value (String2to50 string) = string
 
     let create fieldName string =
-        ConstrainedType.createString fieldName String5to50 5 50 string
+        ConstrainedType.createString fieldName String2to50 2 50 string
 
 module String10to50 =
     let value (String10to50 string) = string

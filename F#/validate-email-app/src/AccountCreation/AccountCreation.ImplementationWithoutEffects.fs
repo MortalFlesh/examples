@@ -37,7 +37,7 @@ let failOnError result =
     | Error error -> failwithf "%A" error
 
 module String20to50 =
-    let create fieldName = String5to50.create fieldName >> failOnError
+    let create fieldName = String2to50.create fieldName >> failOnError
 
 module EmailAddress =
     let create = EmailAddress.create >> failOnError

@@ -40,16 +40,16 @@ module Code =
 
     let fromGenerated = Code    // we just use default constructor for it, but there could be other validations - format, etc.
 
-type Name = private Name of String5to50
+type Name = private Name of String2to50
 
 type NameError =
     | WrongFormat of string
 
 module Name =
-    let value (Name (String5to50 name)) = name
+    let value (Name (String2to50 name)) = name
 
     let create name =
         name
-        |> String5to50.create "Name"
+        |> String2to50.create "Name"
         |> Result.map Name
         |> Result.mapError WrongFormat

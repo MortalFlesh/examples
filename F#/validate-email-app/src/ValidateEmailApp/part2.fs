@@ -28,6 +28,12 @@ let action2 email code =
         Console.successf "Action 2 ends up with Activate account response %A" response
         response
 
-let action3 email =
+let action3 response =
     Console.section "Action 3"
-    failwithf "Not implemented yet"
+
+    match response |> ConsoleApi.action3 with
+    | Some activeAcount ->
+        activeAcount
+        |> Console.successf "Action 3 ends up with active account %A"
+    | None ->
+        Console.success "Action 3 ends up without creating an account"

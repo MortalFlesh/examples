@@ -30,7 +30,7 @@ let checkConfirmationCode : ImplementationWithoutEffects.CheckConfirmationCode =
     fun (ValidEmail email) (ConfirmationCode code) ->
         code
         |> Code.value
-        |> fun codeValue -> 
+        |> fun codeValue ->
             codeValue.Split('|')
             |> Array.head
             |> (=) (email |> EmailAddress.value)
@@ -68,3 +68,12 @@ let action2 askUser unvalidatedUnconfirmedAccount =
 
     unvalidatedUnconfirmedAccount
     |> action2workflow
+
+let action3 response =
+    // inject dependencies
+    let action3workflow =
+        ImplementationWithoutEffects.action3
+            ImplementationWithoutEffects.createActiveAccount
+
+    response
+    |> action3workflow
