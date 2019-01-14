@@ -1,8 +1,5 @@
 module BusinessLogic
 
-// Whats new?
-// ==========
-
 open System
 open MF.ConsoleStyle
 open AccountCreation
@@ -15,6 +12,7 @@ let action1 input =
     |> UnvalidatedEmail
     |> ConsoleApi.action1
     |> Console.successf "Action 1 ends up with unconfirmed account %A"
+    0
 
 let action2 email code =
     Console.section "Action 2"
@@ -35,5 +33,7 @@ let action3 response =
     | Some activeAcount ->
         activeAcount
         |> Console.successf "Action 3 ends up with active account %A"
+        0
     | None ->
         Console.success "Action 3 ends up without creating an account"
+        0
