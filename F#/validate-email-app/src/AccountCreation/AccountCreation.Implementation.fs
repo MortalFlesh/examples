@@ -62,18 +62,21 @@ and SendResult =
 
 let validateEmail : ValidateEmail =
     fun isUnique (UnvalidatedEmail unvalidatedEmail) ->
-        let emailAddress =
-            unvalidatedEmail
-            |> EmailAddress.create
+        result {
+            let! emailAddress =
+                unvalidatedEmail
+                |> EmailAddress.create
+                |> Result.mapError WrongEmailAddress
 
-        if not (emailAddress |> isUnique) then
-            "E-mail is already used."
-            |> ValidationError
-            |> NotUnique
-            |> EmailValidationFailed
-            |> failwithf "%A"
+            if not (emailAddress |> isUnique) then
+                return!
+                    "E-mail is already used."
+                    |> ValidationError
+                    |> NotUnique
+                    |> Error
 
-        ValidEmail emailAddress
+            return ValidEmail emailAddress
+        }
 
 // ---------------------------
 // Confirmation code creation step
@@ -123,22 +126,26 @@ let action1
     : Action.CreateUnconfirmedAccount =  // function definition
 
     fun unvalidatedEmail ->
-        let validEmail =
-            unvalidatedEmail
-            |> validateEmail
-        let confirmationCode =
-            validEmail
-            |> createConfirmationCode
-        let unconfirmedAccount =
-            confirmationCode
-            |> createUnconfirmedAccount validEmail
-        let sendResult =
-            unconfirmedAccount
-            |> sendConfirmationEmail
+        result {
+            let! validEmail =
+                unvalidatedEmail
+                |> validateEmail
+                |> Result.mapError EmailValidationFailed
+            let confirmationCode =
+                validEmail
+                |> createConfirmationCode
+            let unconfirmedAccount =
+                confirmationCode
+                |> createUnconfirmedAccount validEmail
+            let sendResult =
+                unconfirmedAccount
+                |> sendConfirmationEmail
 
-        match sendResult with
-        | NotSent -> ConfirmationEmailNotSent |> failwithf "%A"
-        | Sent -> unconfirmedAccount
+            return!
+                match sendResult with
+                | Sent -> Ok unconfirmedAccount
+                | NotSent -> Error ConfirmationEmailNotSent
+        }
 
 // ======================================================
 // Action 2 / Section 1 : Define each step in the workflow using types
@@ -183,51 +190,51 @@ and Question = Question of string
 // ---------------------------
 // Validation step
 
-let validateUnconfirmedAccount : ValidateUnconfirmedAccount =
-    fun createUnconfirmedAccount unconfirmedAccount ->
-        if String.IsNullOrEmpty(unconfirmedAccount.Email) || String.IsNullOrEmpty(unconfirmedAccount.Code) then
-            failwithf "%A" InvalidInactiveAccount
-
-        let validEmail = unconfirmedAccount.Email |> EmailAddress.create |> ValidEmail
-        let confirmationCode = unconfirmedAccount.Code |> Code.fromGenerated |> ConfirmationCode
-
-        createUnconfirmedAccount validEmail confirmationCode
-
+//let validateUnconfirmedAccount : ValidateUnconfirmedAccount =
+//    fun createUnconfirmedAccount unconfirmedAccount ->
+//        if String.IsNullOrEmpty(unconfirmedAccount.Email) || String.IsNullOrEmpty(unconfirmedAccount.Code) then
+//            failwithf "%A" InvalidInactiveAccount
+//
+//        let validEmail = unconfirmedAccount.Email |> EmailAddress.create |> ValidEmail
+//        let confirmationCode = unconfirmedAccount.Code |> Code.fromGenerated |> ConfirmationCode
+//
+//        createUnconfirmedAccount validEmail confirmationCode
+//
 // ---------------------------
 // Confirmed account creation step
 
-let confirmUnconfirmedAccount : ConfirmUnconfirmedAccount =
-    fun checkConfirmationCode unconfirmedAccount ->
-        if checkConfirmationCode unconfirmedAccount.Email unconfirmedAccount.ConfirmationCode |> not then
-            failwithf "%A" WrongEmailCodeCombination
-
-        {
-            Email = unconfirmedAccount.Email |> ActiveEmail
-        }
+//let confirmUnconfirmedAccount : ConfirmUnconfirmedAccount =
+//    fun checkConfirmationCode unconfirmedAccount ->
+//        if checkConfirmationCode unconfirmedAccount.Email unconfirmedAccount.ConfirmationCode |> not then
+//            failwithf "%A" WrongEmailCodeCombination
+//
+//        {
+//            Email = unconfirmedAccount.Email |> ActiveEmail
+//        }
 
 // ---------------------------
 // Ask user to activate account step
 
-let askUserToActivateAccount : AskUserToActivateAccount =
-    fun askUser confirmedAccount ->
-        let shouldCreateAccount =
-            confirmedAccount.Email
-            |> sprintf "Do you want to create an account for %A? [yes | no]"
-            |> Question
-            |> askUser
-        match shouldCreateAccount with
-        | "no" -> No
-        | "yes" ->
-            let name =
-                "Type in your name:"
-                |> Question
-                |> askUser
-                |> UnvalidatedName
-
-            Yes (confirmedAccount.Email, name)
-
-        // How to handle incomplete pattern here? Should we take all other than "no" as "yes"? Or we should fail?
-        | _ -> failwithf "Wrong answer given - only \"yes\" and \"no\" are allowed."
+//let askUserToActivateAccount : AskUserToActivateAccount =
+//    fun askUser confirmedAccount ->
+//        let shouldCreateAccount =
+//            confirmedAccount.Email
+//            |> sprintf "Do you want to create an account for %A? [yes | no]"
+//            |> Question
+//            |> askUser
+//        match shouldCreateAccount with
+//        | "no" -> No
+//        | "yes" ->
+//            let name =
+//                "Type in your name:"
+//                |> Question
+//                |> askUser
+//                |> UnvalidatedName
+//
+//            Yes (confirmedAccount.Email, name)
+//
+//        // How to handle incomplete pattern here? Should we take all other than "no" as "yes"? Or we should fail?
+//        | _ -> failwithf "Wrong answer given - only \"yes\" and \"no\" are allowed."
 
 // =========================
 // Action 2 workflow
@@ -273,16 +280,17 @@ let createActiveAccount : CreateActiveAccount =
 // Action 3 workflow
 // =========================
 
-let action3
-    createActiveAccount
-    : Action.ActivateAccount =
-
-    fun activateAccountResponse ->
-        match activateAccountResponse with
-        | No -> None
-        | Yes (activeEmail, UnvalidatedName unvalidatedName) ->
-            unvalidatedName
-            |> Name.create
-            |> UserName
-            |> createActiveAccount activeEmail
-            |> Some
+//let action3
+//    createActiveAccount
+//    : Action.ActivateAccount =
+//
+//    fun activateAccountResponse ->
+//        match activateAccountResponse with
+//        | No -> None
+//        | Yes (activeEmail, UnvalidatedName unvalidatedName) ->
+//            unvalidatedName
+//            |> Name.create
+//            |> UserName
+//            |> createActiveAccount activeEmail
+//            |> Some
+//

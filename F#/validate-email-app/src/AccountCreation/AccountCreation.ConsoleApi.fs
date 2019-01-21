@@ -23,21 +23,21 @@ type ConsoleAction3 =
 
 // setup "dummy" dependencies
 
-let isUnique : ImplementationWithoutEffects.IsUnique =
+let isUnique : Implementation.IsUnique =
     fun email ->
         match email |> EmailAddress.value with
         | "already@there.cz" -> false
         | _ -> true
 
-let sendMail : ImplementationWithoutEffects.SendMail =
+let sendMail : Implementation.SendMail =
     fun (EmailBody emailBody) ->
         printfn "Email body: %s" emailBody
-        ImplementationWithoutEffects.Sent
+        Implementation.Sent
 
 let createUnconfirmedAccount =
-    ImplementationWithoutEffects.createUnconfirmedAccount
+    Implementation.createUnconfirmedAccount
 
-let checkConfirmationCode : ImplementationWithoutEffects.CheckConfirmationCode =
+let checkConfirmationCode : Implementation.CheckConfirmationCode =
     fun (ValidEmail email) (ConfirmationCode code) ->
         code
         |> Code.value
@@ -55,18 +55,23 @@ let askUserQuestion consoleAsk : ImplementationWithoutEffects.AskUser =
 // workflow
 // -------------------------------
 
+let private failWithError = function    // todo - remove this helper
+    | Ok success -> success
+    | Error error -> failwithf "Unhandled error: %A" error
+
 let action1 : ConsoleAction1 =
     fun unvalidatedEmail ->
         // inject dependencies
         let action1Workflow =
-            ImplementationWithoutEffects.action1
-                (ImplementationWithoutEffects.validateEmail isUnique)
-                ImplementationWithoutEffects.createConfirmationCode
+            Implementation.action1
+                (Implementation.validateEmail isUnique)
+                Implementation.createConfirmationCode
                 createUnconfirmedAccount
-                (ImplementationWithoutEffects.sendConfirmationEmail sendMail)
+                (Implementation.sendConfirmationEmail sendMail)
 
         unvalidatedEmail
         |> action1Workflow
+        |> failWithError
 
 let action2
     askUser
