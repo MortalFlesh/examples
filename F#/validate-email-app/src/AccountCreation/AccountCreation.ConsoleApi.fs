@@ -46,8 +46,8 @@ let checkConfirmationCode : Implementation.CheckConfirmationCode =
             |> Array.head
             |> (=) (email |> EmailAddress.value)
 
-let askUserQuestion consoleAsk : ImplementationWithoutEffects.AskUser =
-    fun (ImplementationWithoutEffects.Question question) ->
+let askUserQuestion consoleAsk : Implementation.AskUser =
+    fun (Implementation.Question question) ->
         question
         |> consoleAsk
 
@@ -82,13 +82,14 @@ let action2
 
         // inject dependencies
         let action2workflow =
-            ImplementationWithoutEffects.action2
-                (ImplementationWithoutEffects.validateUnconfirmedAccount createUnconfirmedAccount)
-                (ImplementationWithoutEffects.confirmUnconfirmedAccount checkConfirmationCode)
-                (ImplementationWithoutEffects.askUserToActivateAccountWithoutEffects askUser)
+            Implementation.action2
+                (Implementation.validateUnconfirmedAccount createUnconfirmedAccount)
+                (Implementation.confirmUnconfirmedAccount checkConfirmationCode)
+                (Implementation.askUserToActivateAccount askUser)
 
         unvalidatedUnconfirmedAccount
         |> action2workflow
+        |> failWithError
 
 let action3 : ConsoleAction3 =
     fun response ->

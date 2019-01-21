@@ -190,51 +190,61 @@ and Question = Question of string
 // ---------------------------
 // Validation step
 
-//let validateUnconfirmedAccount : ValidateUnconfirmedAccount =
-//    fun createUnconfirmedAccount unconfirmedAccount ->
-//        if String.IsNullOrEmpty(unconfirmedAccount.Email) || String.IsNullOrEmpty(unconfirmedAccount.Code) then
-//            failwithf "%A" InvalidInactiveAccount
-//
-//        let validEmail = unconfirmedAccount.Email |> EmailAddress.create |> ValidEmail
-//        let confirmationCode = unconfirmedAccount.Code |> Code.fromGenerated |> ConfirmationCode
-//
-//        createUnconfirmedAccount validEmail confirmationCode
-//
+let validateUnconfirmedAccount : ValidateUnconfirmedAccount =
+    fun createUnconfirmedAccount unconfirmedAccount ->
+        result {
+            if String.IsNullOrEmpty(unconfirmedAccount.Email) || String.IsNullOrEmpty(unconfirmedAccount.Code) then
+                return! Error InvalidInactiveAccount
+
+            let! emailAddress =
+                unconfirmedAccount.Email
+                |> EmailAddress.create
+                |> Result.mapError (fun _ -> InvalidInactiveAccount)
+
+            let validEmail = ValidEmail emailAddress
+            let confirmationCode = unconfirmedAccount.Code |> Code.fromGenerated |> ConfirmationCode
+
+            return createUnconfirmedAccount validEmail confirmationCode
+        }
+
 // ---------------------------
 // Confirmed account creation step
 
-//let confirmUnconfirmedAccount : ConfirmUnconfirmedAccount =
-//    fun checkConfirmationCode unconfirmedAccount ->
-//        if checkConfirmationCode unconfirmedAccount.Email unconfirmedAccount.ConfirmationCode |> not then
-//            failwithf "%A" WrongEmailCodeCombination
-//
-//        {
-//            Email = unconfirmedAccount.Email |> ActiveEmail
-//        }
+let confirmUnconfirmedAccount : ConfirmUnconfirmedAccount =
+    fun checkConfirmationCode unconfirmedAccount ->
+        result {
+            if checkConfirmationCode unconfirmedAccount.Email unconfirmedAccount.ConfirmationCode |> not then
+                return! Error WrongEmailCodeCombination
+
+            return { Email = unconfirmedAccount.Email |> ActiveEmail }
+        }
 
 // ---------------------------
 // Ask user to activate account step
 
-//let askUserToActivateAccount : AskUserToActivateAccount =
-//    fun askUser confirmedAccount ->
-//        let shouldCreateAccount =
-//            confirmedAccount.Email
-//            |> sprintf "Do you want to create an account for %A? [yes | no]"
-//            |> Question
-//            |> askUser
-//        match shouldCreateAccount with
-//        | "no" -> No
-//        | "yes" ->
-//            let name =
-//                "Type in your name:"
-//                |> Question
-//                |> askUser
-//                |> UnvalidatedName
-//
-//            Yes (confirmedAccount.Email, name)
-//
-//        // How to handle incomplete pattern here? Should we take all other than "no" as "yes"? Or we should fail?
-//        | _ -> failwithf "Wrong answer given - only \"yes\" and \"no\" are allowed."
+let askUserToActivateAccount : AskUserToActivateAccount =
+    fun askUser confirmedAccount ->
+        result {
+            let shouldCreateAccount =
+                confirmedAccount.Email
+                |> sprintf "Do you want to create an account for %A? [yes | no]"
+                |> Question
+                |> askUser
+
+            return!
+                match shouldCreateAccount with
+                | "no" -> Ok No
+                | "yes" ->
+                    let name =
+                        "Type in your name:"
+                        |> Question
+                        |> askUser
+                        |> UnvalidatedName
+
+                    Yes (confirmedAccount.Email, name)
+                    |> Ok
+                | otherAnswer -> Error (WrongAnswerError otherAnswer)
+        }
 
 // =========================
 // Action 2 workflow
@@ -247,13 +257,22 @@ let action2
     : Action.ConfirmAccount =    // function definition
 
     fun unvalidatedUncornfirmedAccount ->
-        let unconfirmedAccount =
-            unvalidatedUncornfirmedAccount
-            |> validateUnconfirmedAccount
+        result {
+            let! unconfirmedAccount =
+                unvalidatedUncornfirmedAccount
+                |> validateUnconfirmedAccount
+                |> Result.mapError ConfirmationError
 
-        unconfirmedAccount
-        |> confirmUnconfirmedAccount
-        |> askUserToActiveAccount
+            let! confirmedAccount =
+                unconfirmedAccount
+                |> confirmUnconfirmedAccount
+                |> Result.mapError ConfirmationError
+
+            return!
+                confirmedAccount
+                |> askUserToActiveAccount
+                |> Result.mapError WrongAnswer
+        }
 
 // ======================================================
 // Action 3 / Section 1 : Define each step in the workflow using types

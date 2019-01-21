@@ -65,9 +65,10 @@ type ConfirmationError =
     | InvalidInactiveAccount
     | WrongEmailCodeCombination
 
-type WrongAnswerError = WrongAnswer of string
+type WrongAnswerError = WrongAnswerError of string
 
 type ActivationFailed =
+    | ConfirmationError of ConfirmationError
     | WrongAnswer of WrongAnswerError
     | NotWanted
     | WrongName of NameError
@@ -81,10 +82,7 @@ module Action =
         UnvalidatedEmail -> Result<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
 
     type ConfirmAccount =
-        UnvalidatedUnconfirmedAccount -> Result<ConfirmedAccount, ConfirmationError>
-
-    type AskUserToActiveAccount =
-        ConfirmedAccount -> ActivateAccountResponse
+        UnvalidatedUnconfirmedAccount -> Result<ActivateAccountResponse, ActivationFailed>
 
     type ActivateAccount =
         ActivateAccountResponse -> Result<ActiveAccount, ActivationFailed>
