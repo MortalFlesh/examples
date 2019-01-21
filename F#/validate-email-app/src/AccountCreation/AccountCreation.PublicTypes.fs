@@ -65,21 +65,26 @@ type ConfirmationError =
     | InvalidInactiveAccount
     | WrongEmailCodeCombination
 
+type WrongAnswerError = WrongAnswer of string
+
 type ActivationFailed =
+    | WrongAnswer of WrongAnswerError
     | NotWanted
     | WrongName of NameError
 
 // ----------------------------------
 // Workflows (actions)
 
-type CreateUnconfirmedAccount =
-    UnvalidatedEmail -> Result<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
+[<RequireQualifiedAccess>]
+module Action =
+    type CreateUnconfirmedAccount =
+        UnvalidatedEmail -> Result<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
 
-type ConfirmAccount =
-    UnvalidatedUnconfirmedAccount -> Result<ConfirmedAccount, ConfirmationError>
+    type ConfirmAccount =
+        UnvalidatedUnconfirmedAccount -> Result<ConfirmedAccount, ConfirmationError>
 
-type AskUserToActiveAccount =
-    ConfirmedAccount -> ActivateAccountResponse
+    type AskUserToActiveAccount =
+        ConfirmedAccount -> ActivateAccountResponse
 
-type ActivateAccount =
-    ActivateAccountResponse -> Result<ActiveAccount, ActivationFailed>
+    type ActivateAccount =
+        ActivateAccountResponse -> Result<ActiveAccount, ActivationFailed>

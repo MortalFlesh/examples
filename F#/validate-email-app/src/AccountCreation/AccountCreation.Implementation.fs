@@ -23,10 +23,10 @@ open AccountCreation.Domain
 type ValidateEmail =
     IsUnique                // dependency
         -> UnvalidatedEmail // input
-        -> ValidEmail       // output
+        -> Result<ValidEmail, EmailValidationError>       // output
 
 and IsUnique =
-    EmailAddress -> bool
+    EmailAddress -> bool    // todo - is it really that simple?
 
 // ---------------------------
 // Confirmation code creation step
@@ -44,7 +44,7 @@ type CreateUnconfirmedAccount =
 // Confirmation email step
 
 type SendConfirmationEmail =
-    SendMail -> UnconfirmedAccount -> SendResult
+    SendMail -> UnconfirmedAccount -> SendResult    // todo - will it be immediate?
 
 and SendMail =
     EmailBody -> SendResult
@@ -120,7 +120,7 @@ let action1
     createConfirmationCode      // dependency
     createUnconfirmedAccount    // dependency
     sendConfirmationEmail       // dependency
-    : CreateUnconfirmedAccountWithoutEffects =  // function definition
+    : Action.CreateUnconfirmedAccount =  // function definition
 
     fun unvalidatedEmail ->
         let validEmail =
@@ -148,13 +148,17 @@ let action1
 // Validation step
 
 type ValidateUnconfirmedAccount =
-    CreateUnconfirmedAccount -> UnvalidatedUnconfirmedAccount -> UnconfirmedAccount
+    CreateUnconfirmedAccount
+        -> UnvalidatedUnconfirmedAccount
+        -> Result<UnconfirmedAccount, ConfirmationError>
 
 // ---------------------------
 // Confirmed account creation step
 
 type ConfirmUnconfirmedAccount =
-    CheckConfirmationCode -> UnconfirmedAccount -> ConfirmedAccount
+    CheckConfirmationCode
+        -> UnconfirmedAccount
+        -> Result<ConfirmedAccount, ConfirmationError>
 
 and CheckConfirmationCode =
     ValidEmail -> ConfirmationCode -> bool
@@ -162,8 +166,10 @@ and CheckConfirmationCode =
 // ---------------------------
 // Ask user to activate account step
 
-type AskUserToActivateAccountWithoutEffects =
-    AskUser -> ConfirmedAccount -> ActivateAccountResponse
+type AskUserToActivateAccount =
+    AskUser
+        -> ConfirmedAccount
+        -> Result<ActivateAccountResponse, WrongAnswerError>
 
 and AskUser =
     Question -> string
@@ -202,7 +208,7 @@ let confirmUnconfirmedAccount : ConfirmUnconfirmedAccount =
 // ---------------------------
 // Ask user to activate account step
 
-let askUserToActivateAccountWithoutEffects : AskUserToActivateAccountWithoutEffects =
+let askUserToActivateAccount : AskUserToActivateAccount =
     fun askUser confirmedAccount ->
         let shouldCreateAccount =
             confirmedAccount.Email
@@ -228,10 +234,10 @@ let askUserToActivateAccountWithoutEffects : AskUserToActivateAccountWithoutEffe
 // =========================
 
 let action2
-    validateUnconfirmedAccount          // dependency
-    confirmUnconfirmedAccount           // dependency
-    askUserToActiveAccount              // dependency
-    : ConfirmAccountWithoutEffects =    // function definition
+    validateUnconfirmedAccount   // dependency
+    confirmUnconfirmedAccount    // dependency
+    askUserToActiveAccount       // dependency
+    : Action.ConfirmAccount =    // function definition
 
     fun unvalidatedUncornfirmedAccount ->
         let unconfirmedAccount =
@@ -269,7 +275,7 @@ let createActiveAccount : CreateActiveAccount =
 
 let action3
     createActiveAccount
-    : ActivateAccountWithoutEffects =
+    : Action.ActivateAccount =
 
     fun activateAccountResponse ->
         match activateAccountResponse with
