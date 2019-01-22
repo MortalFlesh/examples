@@ -8,14 +8,20 @@ open AccountCreation
 // Types for actions executed in console application
 // =============================
 
-type ConsoleAction1 =
-    UnvalidatedEmail -> UnconfirmedAccount
+type UserInput = string
+type Message = string
 
-type ConsoleAction2 =
-    UnvalidatedUnconfirmedAccount -> ActivateAccountResponse
+and ConsoleResult =
+    | Success of Message
+    | Error of Message
 
-type ConsoleAction3 =
-    ActivateAccountResponse -> ActiveAccount option
+[<RequireQualifiedAccess>]
+module ConsoleAction =
+    type CreateUnconfirmedAccount =
+        UserInput -> ConsoleResult
+
+    type ConfirmAndTryToActivateAccount =
+        (UserInput * UserInput) -> ConsoleResult
 
 // =============================
 // Implementation
@@ -55,12 +61,13 @@ let askUserQuestion consoleAsk : Implementation.AskUser =
 // workflow
 // -------------------------------
 
-let private failWithError = function    // todo - remove this helper
-    | Ok success -> success
-    | Error error -> failwithf "Unhandled error: %A" error
+let createUnconfirmedAccountAction
+    consoleSection
+    : ConsoleAction.CreateUnconfirmedAccount =
 
-let action1 : ConsoleAction1 =
-    fun unvalidatedEmail ->
+    fun userInput ->
+        consoleSection "Action 1 - create unconfirmed account"
+
         // inject dependencies
         let action1Workflow =
             Implementation.action1
@@ -69,35 +76,71 @@ let action1 : ConsoleAction1 =
                 createUnconfirmedAccount
                 (Implementation.sendConfirmationEmail sendMail)
 
-        unvalidatedEmail
+        userInput
+        |> UnvalidatedEmail
         |> action1Workflow
-        |> failWithError
+        |> function
+            | Result.Ok unconfirmedAccount ->
+                unconfirmedAccount
+                |> sprintf "Action 1 ends up with unconfirmed account %A"
+                |> ConsoleResult.Success
+            | Result.Error error ->
+                error
+                |> sprintf "Action 1 ends up with error:\n%A"
+                |> ConsoleResult.Error
 
-let action2
-    askUser
-    : ConsoleAction2 =
+let confirmAndTryToActivateAccountAction
+    consoleSection
+    consoleAsk
+    : ConsoleAction.ConfirmAndTryToActivateAccount =
 
-    fun unvalidatedUnconfirmedAccount ->
-        let askUser = askUserQuestion askUser
+    fun (emailInput, codeInput) ->
+        result {
+            consoleSection "Action 2 - Confirm account"
 
-        // inject dependencies
-        let action2workflow =
-            Implementation.action2
-                (Implementation.validateUnconfirmedAccount createUnconfirmedAccount)
-                (Implementation.confirmUnconfirmedAccount checkConfirmationCode)
-                (Implementation.askUserToActivateAccount askUser)
+            // inject dependencies
+            let askUser = askUserQuestion consoleAsk
+            let action2workflow =
+                Implementation.action2
+                    (Implementation.validateUnconfirmedAccount createUnconfirmedAccount)
+                    (Implementation.confirmUnconfirmedAccount checkConfirmationCode)
+                    (Implementation.askUserToActivateAccount askUser)
 
-        unvalidatedUnconfirmedAccount
-        |> action2workflow
-        |> failWithError
+            let unvalidatedUnconfirmedAccount = {
+                Email = emailInput
+                Code = codeInput
+            }
 
-let action3 : ConsoleAction3 =
-    fun response ->
-        // inject dependencies
-        let action3workflow =
-            Implementation.action3
-                Implementation.createActiveAccount
+            let! response =
+                unvalidatedUnconfirmedAccount
+                |> action2workflow
 
-        response
-        |> action3workflow
-        |> failWithError
+            let action2SuccessMessage = sprintf "Action 2 ends up with Activate account response %A" response
+
+            consoleSection "Action 3 - Activate account (optional)"
+
+            // inject dependencies
+            let action3workflow =
+                Implementation.action3
+                    Implementation.createActiveAccount
+
+            let! activeAccountOption =
+                response
+                |> action3workflow
+
+            let action3SuccessMessage =
+                match activeAccountOption with
+                | Some activeAccount -> sprintf "Action 3 ends up with active account %A" activeAccount
+                | _ -> "Action 3 ends up without creating an account"
+
+            return [action2SuccessMessage; action3SuccessMessage]
+        }
+        |> function
+            | Result.Ok successMessages ->
+                successMessages
+                |> String.concat "\n"
+                |> ConsoleResult.Success
+            | Result.Error error ->
+                error
+                |> sprintf "Actions 2, 3 ends up with error:\n%A"
+                |> ConsoleResult.Error

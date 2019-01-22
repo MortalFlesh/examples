@@ -2,20 +2,30 @@
 
 open System
 open MF.ConsoleStyle
+open AccountCreation
 
 [<EntryPoint>]
 let main argv =
     Console.title "Hello from Validate E-mail App"
 
+    let printResult = function
+        | ConsoleApi.Success message ->
+            Console.success message
+            0
+        | ConsoleApi.Error message ->
+            Console.error message
+            1
+
     try
         match argv with
         | [| "action1"; input |] ->
             input
-            |> BusinessLogic.action1
-            |> BusinessLogic.printResult
+            |> ConsoleApi.createUnconfirmedAccountAction Console.section
+            |> printResult
         | [| "action2"; email; code |] ->
-            BusinessLogic.action2 email code
-            |> BusinessLogic.printResult
+            (email, code)
+            |> ConsoleApi.confirmAndTryToActivateAccountAction Console.section Console.ask
+            |> printResult
         | _ ->
             Console.error "Invalid or unknown action"
             0
