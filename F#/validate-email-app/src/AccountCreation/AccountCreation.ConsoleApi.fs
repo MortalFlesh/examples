@@ -22,7 +22,7 @@ type Action2or3Error =
 [<RequireQualifiedAccess>]
 module ConsoleAction =
     type CreateUnconfirmedAccount =
-        UserInput -> ConsoleResult
+        UserInput -> Async<ConsoleResult>
 
     type ConfirmAndTryToActivateAccount =
         (UserInput * UserInput) -> ConsoleResult
@@ -35,9 +35,15 @@ module ConsoleAction =
 
 let isUnique : Implementation.IsUnique =
     fun email ->
-        match email |> EmailAddress.value with
-        | "already@there.cz" -> false
-        | _ -> true
+        async {
+            printfn "[info] waiting for api or something ..."
+            do! Async.Sleep 1000    // simulate 1s execution
+
+            return
+                match email |> EmailAddress.value with
+                | "already@there.cz" -> false
+                | _ -> true
+        }
 
 let sendMail : Implementation.SendMail =
     fun (EmailBody emailBody) ->
@@ -70,28 +76,34 @@ let createUnconfirmedAccountAction
     : ConsoleAction.CreateUnconfirmedAccount =
 
     fun userInput ->
-        consoleSection "Action 1 - create unconfirmed account"
+        async {
+            consoleSection "Action 1 - create unconfirmed account"
 
-        // inject dependencies
-        let action1Workflow =
-            Implementation.action1
-                (Implementation.validateEmail isUnique)
-                Implementation.createConfirmationCode
-                createUnconfirmedAccount
-                (Implementation.sendConfirmationEmail sendMail)
+            // inject dependencies
+            let action1Workflow =
+                Implementation.action1
+                    (Implementation.validateEmail isUnique)
+                    Implementation.createConfirmationCode
+                    createUnconfirmedAccount
+                    (Implementation.sendConfirmationEmail sendMail)
 
-        userInput
-        |> UnvalidatedEmail
-        |> action1Workflow
-        |> function
-            | Result.Ok unconfirmedAccount ->
-                unconfirmedAccount
-                |> sprintf "Action 1 ends up with unconfirmed account %A"
-                |> ConsoleResult.Success
-            | Result.Error error ->
-                error
-                |> sprintf "Action 1 ends up with error:\n%A"
-                |> ConsoleResult.Error
+            let! asyncResponse =
+                userInput
+                |> UnvalidatedEmail
+                |> action1Workflow
+
+            return
+                asyncResponse
+                |> function
+                    | Result.Ok unconfirmedAccount ->
+                        unconfirmedAccount
+                        |> sprintf "Action 1 ends up with unconfirmed account %A"
+                        |> ConsoleResult.Success
+                    | Result.Error error ->
+                        error
+                        |> sprintf "Action 1 ends up with error:\n%A"
+                        |> ConsoleResult.Error
+        }
 
 let confirmAndTryToActivateAccountAction
     consoleSection

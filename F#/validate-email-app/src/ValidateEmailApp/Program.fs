@@ -19,8 +19,12 @@ let main argv =
     try
         match argv with
         | [| "action1"; input |] ->
-            input
-            |> ConsoleApi.createUnconfirmedAccountAction Console.section
+            async {
+                return!
+                    input
+                    |> ConsoleApi.createUnconfirmedAccountAction Console.section
+            }
+            |> Async.RunSynchronously
             |> printResult
         | [| "action2"; email; code |] ->
             (email, code)

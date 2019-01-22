@@ -78,7 +78,7 @@ type ActivationFailed =
 [<RequireQualifiedAccess>]
 module Action =
     type CreateUnconfirmedAccount =
-        UnvalidatedEmail -> Result<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
+        UnvalidatedEmail -> AsyncResult<UnconfirmedAccount, UnconfirmedAccountCreationFailed>
 
     type ConfirmAccount =
         UnvalidatedUnconfirmedAccount -> Result<ActivateAccountResponse, ActivationFailed>

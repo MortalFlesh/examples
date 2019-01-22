@@ -23,10 +23,10 @@ open AccountCreation.Domain
 type ValidateEmail =
     IsUnique                // dependency
         -> UnvalidatedEmail // input
-        -> Result<ValidEmail, EmailValidationError>       // output
+        -> AsyncResult<ValidEmail, EmailValidationError>       // output
 
 and IsUnique =
-    EmailAddress -> bool    // todo - is it really that simple?
+    EmailAddress -> Async<bool>
 
 // ---------------------------
 // Confirmation code creation step
@@ -62,18 +62,25 @@ and SendResult =
 
 let validateEmail : ValidateEmail =
     fun isUnique (UnvalidatedEmail unvalidatedEmail) ->
-        result {
+        asyncResult {
             let! emailAddress =
                 unvalidatedEmail
                 |> EmailAddress.create
                 |> Result.mapError WrongEmailAddress
+                |> AsyncResult.ofResult
 
-            if not (emailAddress |> isUnique) then
+            let! isEmailUnique =
+                emailAddress
+                |> isUnique
+                |> AsyncResult.ofAsync
+
+            if not isEmailUnique then
                 return!
                     "E-mail is already used."
                     |> ValidationError
                     |> NotUnique
                     |> Error
+                    |> AsyncResult.ofResult
 
             return ValidEmail emailAddress
         }
@@ -126,11 +133,11 @@ let action1
     : Action.CreateUnconfirmedAccount =  // function definition
 
     fun unvalidatedEmail ->
-        result {
+        asyncResult {
             let! validEmail =
                 unvalidatedEmail
                 |> validateEmail
-                |> Result.mapError EmailValidationFailed
+                |> AsyncResult.mapError EmailValidationFailed
             let confirmationCode =
                 validEmail
                 |> createConfirmationCode
@@ -145,6 +152,7 @@ let action1
                 match sendResult with
                 | Sent -> Ok unconfirmedAccount
                 | NotSent -> Error ConfirmationEmailNotSent
+                |> AsyncResult.ofResult
         }
 
 // ======================================================
