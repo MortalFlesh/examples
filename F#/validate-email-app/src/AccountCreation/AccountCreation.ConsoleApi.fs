@@ -15,6 +15,10 @@ and ConsoleResult =
     | Success of Message
     | Error of Message
 
+type Action2or3Error =
+    | Action2Error of ActivationFailed
+    | Action3Error of ActivationFailed
+
 [<RequireQualifiedAccess>]
 module ConsoleAction =
     type CreateUnconfirmedAccount =
@@ -114,6 +118,7 @@ let confirmAndTryToActivateAccountAction
             let! response =
                 unvalidatedUnconfirmedAccount
                 |> action2workflow
+                |> Result.mapError Action2Error
 
             let action2SuccessMessage = sprintf "Action 2 ends up with Activate account response %A" response
 
@@ -127,6 +132,7 @@ let confirmAndTryToActivateAccountAction
             let! activeAccountOption =
                 response
                 |> action3workflow
+                |> Result.mapError Action3Error
 
             let action3SuccessMessage =
                 match activeAccountOption with
@@ -140,7 +146,8 @@ let confirmAndTryToActivateAccountAction
                 successMessages
                 |> String.concat "\n"
                 |> ConsoleResult.Success
-            | Result.Error error ->
-                error
-                |> sprintf "Actions 2, 3 ends up with error:\n%A"
+            | Result.Error action2or3Error ->
+                match action2or3Error with
+                | Action2Error error -> error |> sprintf "Actions 2 ends up with error:\n%A"
+                | Action3Error error -> error |> sprintf "Actions 3 ends up with error:\n%A"
                 |> ConsoleResult.Error
