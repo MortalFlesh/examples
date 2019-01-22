@@ -14,8 +14,4 @@
     <Compile Include="AccountCreation.ConsoleApi.fs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Chessie" Version="0.6.0" />
-  </ItemGroup>
-
 </Project>

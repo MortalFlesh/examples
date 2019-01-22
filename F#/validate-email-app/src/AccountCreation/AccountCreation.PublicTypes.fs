@@ -57,6 +57,9 @@ type EmailValidationError =
     | WrongEmailAddress of EmailAddressError
     | NotUnique of ValidationError
 
+type SendingEmailError =
+    | EmailApiError of string
+
 type UnconfirmedAccountCreationFailed =
     | EmailValidationFailed of EmailValidationError
     | ConfirmationEmailNotSent

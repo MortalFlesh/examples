@@ -22,7 +22,7 @@ let main argv =
             async {
                 return!
                     input
-                    |> ConsoleApi.createUnconfirmedAccountAction Console.section
+                    |> ConsoleApi.createUnconfirmedAccountAction Console.section (Console.errorf "[log] %s")
             }
             |> Async.RunSynchronously
             |> printResult

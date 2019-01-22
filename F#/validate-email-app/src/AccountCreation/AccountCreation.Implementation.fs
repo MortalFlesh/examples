@@ -44,10 +44,12 @@ type CreateUnconfirmedAccount =
 // Confirmation email step
 
 type SendConfirmationEmail =
-    SendMail -> UnconfirmedAccount -> SendResult    // todo - will it be immediate?
+    SendMail
+        -> UnconfirmedAccount
+        -> Async<SendResult>
 
 and SendMail =
-    EmailBody -> SendResult
+    EmailBody -> AsyncResult<unit, SendingEmailError>
 
 and SendResult =
     | Sent
@@ -107,19 +109,31 @@ let createUnconfirmedAccount : CreateUnconfirmedAccount =
 // ---------------------------
 // Confirmation email step
 
-let sendConfirmationEmail : SendConfirmationEmail =
+let sendConfirmationEmail log : SendConfirmationEmail =
     fun sendMail uncofirmedAccount ->
-        let { Email = validEmail; ConfirmationCode = confirmationCode } = uncofirmedAccount
+        async {
+            let { Email = validEmail; ConfirmationCode = confirmationCode } = uncofirmedAccount
 
-        let (ValidEmail emailAddress) = validEmail
-        let emailValue = emailAddress |> EmailAddress.value
+            let (ValidEmail emailAddress) = validEmail
+            let emailValue = emailAddress |> EmailAddress.value
 
-        let (ConfirmationCode code) = confirmationCode
-        let codeValue = code |> Code.value
+            let (ConfirmationCode code) = confirmationCode
+            let codeValue = code |> Code.value
 
-        sprintf "code for e-mail %s is %s" emailValue codeValue
-        |> EmailBody
-        |> sendMail
+            let! sentEmailResult =
+                sprintf "code for e-mail %s is %s" emailValue codeValue
+                |> EmailBody
+                |> sendMail
+
+            return
+                match sentEmailResult with
+                | Error error ->
+                    // we dont need to handle error now, just return, that is was NOT SENT
+                    // and log the error
+                    sprintf "%A" error |> log
+                    NotSent
+                | _ -> Sent
+        }
 
 // =========================
 // Action 1 workflow
@@ -144,9 +158,10 @@ let action1
             let unconfirmedAccount =
                 confirmationCode
                 |> createUnconfirmedAccount validEmail
-            let sendResult =
+            let! sendResult =
                 unconfirmedAccount
                 |> sendConfirmationEmail
+                |> AsyncResult.ofAsync
 
             return!
                 match sendResult with

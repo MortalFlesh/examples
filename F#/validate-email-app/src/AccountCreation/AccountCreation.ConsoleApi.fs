@@ -36,7 +36,7 @@ module ConsoleAction =
 let isUnique : Implementation.IsUnique =
     fun email ->
         async {
-            printfn "[info] waiting for api or something ..."
+            printfn "[email storage] waiting for api or something ..."
             do! Async.Sleep 1000    // simulate 1s execution
 
             return
@@ -46,9 +46,24 @@ let isUnique : Implementation.IsUnique =
         }
 
 let sendMail : Implementation.SendMail =
+    let random = System.Random()
+
     fun (EmailBody emailBody) ->
-        printfn "Email body: %s" emailBody
-        Implementation.Sent
+        asyncResult {
+            printfn "[send email] waiting for mail api ..."
+            do!
+                Async.Sleep 1000    // simulate 1s execution
+                |> AsyncResult.ofAsync
+
+            if random.Next(1, 6) = 1 then
+                return!
+                    "Email api failed to send an e-mail (There is 20% change that this would happen, sorry for that)."
+                    |> EmailApiError
+                    |> Result.Error
+                    |> AsyncResult.ofResult
+
+            printfn "[send email] Body: \"%s\"" emailBody
+        }
 
 let createUnconfirmedAccount =
     Implementation.createUnconfirmedAccount
@@ -73,6 +88,7 @@ let askUserQuestion consoleAsk : Implementation.AskUser =
 
 let createUnconfirmedAccountAction
     consoleSection
+    consoleError
     : ConsoleAction.CreateUnconfirmedAccount =
 
     fun userInput ->
@@ -85,7 +101,7 @@ let createUnconfirmedAccountAction
                     (Implementation.validateEmail isUnique)
                     Implementation.createConfirmationCode
                     createUnconfirmedAccount
-                    (Implementation.sendConfirmationEmail sendMail)
+                    (Implementation.sendConfirmationEmail consoleError sendMail)
 
             let! asyncResponse =
                 userInput
