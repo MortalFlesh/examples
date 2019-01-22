@@ -70,7 +70,6 @@ type WrongAnswerError = WrongAnswerError of string
 type ActivationFailed =
     | ConfirmationError of ConfirmationError
     | WrongAnswer of WrongAnswerError
-    | NotWanted
     | WrongName of NameError
 
 // ----------------------------------
@@ -85,4 +84,4 @@ module Action =
         UnvalidatedUnconfirmedAccount -> Result<ActivateAccountResponse, ActivationFailed>
 
     type ActivateAccount =
-        ActivateAccountResponse -> Result<ActiveAccount, ActivationFailed>
+        ActivateAccountResponse -> Result<ActiveAccount option, ActivationFailed>

@@ -95,8 +95,9 @@ let action3 : ConsoleAction3 =
     fun response ->
         // inject dependencies
         let action3workflow =
-            ImplementationWithoutEffects.action3
-                ImplementationWithoutEffects.createActiveAccount
+            Implementation.action3
+                Implementation.createActiveAccount
 
         response
         |> action3workflow
+        |> failWithError

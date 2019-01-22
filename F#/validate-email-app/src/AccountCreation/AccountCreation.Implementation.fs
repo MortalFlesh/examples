@@ -299,17 +299,23 @@ let createActiveAccount : CreateActiveAccount =
 // Action 3 workflow
 // =========================
 
-//let action3
-//    createActiveAccount
-//    : Action.ActivateAccount =
-//
-//    fun activateAccountResponse ->
-//        match activateAccountResponse with
-//        | No -> None
-//        | Yes (activeEmail, UnvalidatedName unvalidatedName) ->
-//            unvalidatedName
-//            |> Name.create
-//            |> UserName
-//            |> createActiveAccount activeEmail
-//            |> Some
-//
+let action3
+    createActiveAccount
+    : Action.ActivateAccount =
+
+    fun activateAccountResponse ->
+        result {
+            match activateAccountResponse with
+            | No -> return None
+            | Yes (activeEmail, UnvalidatedName unvalidatedName) ->
+                let! name =
+                    unvalidatedName
+                    |> Name.create
+                    |> Result.mapError WrongName
+
+                return
+                    name
+                    |> UserName
+                    |> createActiveAccount activeEmail
+                    |> Some
+        }
