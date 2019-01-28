@@ -6,6 +6,8 @@ open AccountCreation
 
 [<EntryPoint>]
 let main argv =
+    // Example.ErrorHandlingExample.errorHandlingExample()
+
     Console.title "Hello from Validate E-mail App"
 
     let printResult = function

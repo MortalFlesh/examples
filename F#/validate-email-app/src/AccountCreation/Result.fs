@@ -12,8 +12,20 @@ module Result =
         | Ok _, Error err2 -> Error err2
         | Error err1, Error _ -> Error err1
 
+     // combine a list of results, monadically
+    let sequence aListOfResults =
+        let (<*>) = apply // monadic
+        let (<!>) = Result.map
+        let cons head tail = head::tail
+        let consR headR tailR = cons <!> headR <*> tailR
+        let initialValue = Ok [] // empty list inside Result
+
+        // loop through the list, prepending each element
+        // to the initial value
+        List.foldBack consR aListOfResults initialValue
+
 [<AutoOpen>]
-module internal ResultComputationExpression =
+module ResultComputationExpression =
     // https://github.com/swlaschin/DomainModelingMadeFunctional/blob/master/src/OrderTaking/Result.fs#L178
 
     type ResultBuilder() =

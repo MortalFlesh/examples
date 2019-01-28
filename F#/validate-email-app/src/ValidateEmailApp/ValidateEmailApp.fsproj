@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="ErrorHandlingExample.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
